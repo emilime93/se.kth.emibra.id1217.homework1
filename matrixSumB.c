@@ -19,8 +19,8 @@
 #include <time.h>
 #include <sys/time.h>
 #include <limits.h>
-#define MAXSIZE 10000 /* maximum matrix size */
-#define MAXWORKERS 10 /* maximum number of workers */
+#define MAXSIZE 10000   /* maximum matrix size */
+#define MAXWORKERS 10   /* maximum number of workers */
 
 pthread_mutex_t barrier; /* mutex lock for the barrier */
 pthread_cond_t go;       /* condition variable for leaving */
@@ -65,10 +65,12 @@ double read_timer()
 
 double start_time, end_time;  /* start and end times */
 int size, stripSize;          /* assume size is multiple of numWorkers */
-int sums[MAXWORKERS];         /* partial sums */
 int matrix[MAXSIZE][MAXSIZE]; /* matrix */
-Index max_indices[MAXWORKERS];    /* max indices */
-Index min_indices[MAXWORKERS];    /* min indices */
+
+/*  */
+Index minIndex;
+Index maxIndex;
+long sum = 0;
 
 void *Worker(void *);
 
@@ -122,6 +124,8 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    Index m;
+
     /* do the parallel work: create the workers */
     start_time = read_timer();
     for (l = 0; l < numWorkers; l++) {
@@ -130,6 +134,12 @@ int main(int argc, char *argv[])
     for (l = 0; l < numWorkers; l++) {
         pthread_join(workerid[l], NULL);
     }
+    printf("Done!\n");
+
+    /* get end time */
+    end_time = read_timer();
+    /* print results */
+    printf("The execution time is %g sec\n", end_time - start_time);
 
     pthread_exit(NULL);
 }
@@ -140,8 +150,8 @@ void *Worker(void *arg)
 {
     long myid = (long)arg;
     int total, i, j, first, last;
-    max_indices[myid].value = LONG_MIN;
-    min_indices[myid].value = LONG_MAX;
+    long found_max = LONG_MIN, found_min = LONG_MAX;
+
 
 #ifdef DEBUG
     printf("worker %ld (pthread id %ld) has started\n", myid, (long)pthread_self());
@@ -155,50 +165,14 @@ void *Worker(void *arg)
     total = 0;
     for (i = first; i <= last; i++) {
         for (j = 0; j < size; j++) {
-                total += matrix[i][j];
+            total += matrix[i][j];
+            if (matrix[i][j] > found_max) {
 
-                if (matrix[i][j] > max_indices[myid].value) {
-                    max_indices[myid].value = matrix[i][j];
-                    max_indices[myid].i = i;
-                    max_indices[myid].j = j;
-                }
-                if (matrix[i][j] < min_indices[myid].value) {
-                    min_indices[myid].value = matrix[i][j];
-                    min_indices[myid].i = i;
-                    min_indices[myid].j = j;
-                }
-        }
-    }
-    sums[myid] = total;
-    Barrier();
-    if (myid == 0)
-    {
-        Index compiledMax, compiledMin;
-        compiledMax.value = LONG_MIN;
-        compiledMin.value = LONG_MAX;
-
-        total = 0;
-        for (i = 0; i < numWorkers; i++)
-            total += sums[i];
-
-        for (i = 0; i < numWorkers; i++) {
-            if (max_indices[i].value > compiledMax.value) {
-                compiledMax.value = max_indices[i].value;
-                compiledMax.i = max_indices[i].i;
-                compiledMax.j = max_indices[i].j;
-            }
-            if (min_indices[i].value < compiledMin.value) {
-                compiledMin.value = min_indices[i].value;
-                compiledMin.i = min_indices[i].i;
-                compiledMin.j = min_indices[i].j;
             }
         }
-        /* get end time */
-        end_time = read_timer();
-        /* print results */
-        printf("The total is %d\n", total);
-        printf("Max value: %ld (%ld, %ld)\n", compiledMax.value, compiledMax.i, compiledMax.j);
-        printf("Min value: %ld (%ld, %ld)\n", compiledMin.value, compiledMin.i, compiledMin.j);
-        printf("The execution time is %g sec\n", end_time - start_time);
     }
+    // LOCK FOR SUM
+     sum += total;
+
+     // UNLOCK
 }
