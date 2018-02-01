@@ -22,8 +22,7 @@
 #define MAXSIZE 10000   /* maximum matrix size */
 #define MAXWORKERS 10   /* maximum number of workers */
 
-pthread_mutex_t barrier; /* mutex lock for the barrier */
-pthread_cond_t go;       /* condition variable for leaving */
+pthread_mutex_t lock;   /* Lock for  */
 int numWorkers;          /* number of workers */
 int numArrived = 0;      /* number who have arrived */
 
@@ -32,21 +31,6 @@ typedef struct {
     long i;
     long j;
 } Index;
-
-/* a reusable counter barrier */
-void Barrier()
-{
-    pthread_mutex_lock(&barrier);
-    numArrived++;
-    if (numArrived == numWorkers)
-    {
-        numArrived = 0;
-        pthread_cond_broadcast(&go);
-    }
-    else
-        pthread_cond_wait(&go, &barrier);
-    pthread_mutex_unlock(&barrier);
-}
 
 /* timer */
 double read_timer()
@@ -82,14 +66,12 @@ int main(int argc, char *argv[])
     pthread_attr_t attr;
     pthread_t workerid[MAXWORKERS];
 
-
     /* set global thread attributes */
     pthread_attr_init(&attr);
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 
     /* initialize mutex and condition variable */
-    pthread_mutex_init(&barrier, NULL);
-    pthread_cond_init(&go, NULL);
+    pthread_mutex_init(&lock, NULL);
 
     /* read command line args if any */
     size = (argc > 1) ? atoi(argv[1]) : MAXSIZE;
@@ -103,10 +85,8 @@ int main(int argc, char *argv[])
     srand(time(NULL));
 
     /* initialize the matrix */
-    for (i = 0; i < size; i++)
-    {
-        for (j = 0; j < size; j++)
-        {
+    for (i = 0; i < size; i++) {
+        for (j = 0; j < size; j++) {
             matrix[i][j] = rand() % 99; // 1;
         }
     }
@@ -124,22 +104,24 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    Index m;
+    /* Read timer for start time */
+    start_time = read_timer();
 
     /* do the parallel work: create the workers */
-    start_time = read_timer();
     for (l = 0; l < numWorkers; l++) {
         pthread_create(&workerid[l], &attr, Worker, (void *)l);
     }
+    /* Wait for all threads to complete their work */
     for (l = 0; l < numWorkers; l++) {
         pthread_join(workerid[l], NULL);
     }
-    printf("Done!\n");
 
     /* get end time */
     end_time = read_timer();
+
     /* print results */
     printf("The execution time is %g sec\n", end_time - start_time);
+    printf("Total: %ld\nMax: %ld (%ld, %ld)\nMin: %ld (%ld, %ld)\n", sum, maxIndex.value, maxIndex.i, maxIndex.j, minIndex.value, minIndex.i, minIndex.j);
 
     pthread_exit(NULL);
 }
@@ -150,7 +132,9 @@ void *Worker(void *arg)
 {
     long myid = (long)arg;
     int total, i, j, first, last;
-    long found_max = LONG_MIN, found_min = LONG_MAX;
+    Index min_index, max_index;
+    min_index.value = LONG_MAX;
+    max_index.value = LONG_MIN;
 
 
 #ifdef DEBUG
@@ -166,13 +150,28 @@ void *Worker(void *arg)
     for (i = first; i <= last; i++) {
         for (j = 0; j < size; j++) {
             total += matrix[i][j];
-            if (matrix[i][j] > found_max) {
-
+            if (matrix[i][j] > max_index.value) {
+                max_index.value = matrix[i][j];
+                max_index.i = i;
+                max_index.j = j;
+            }
+            if (matrix[i][j] < min_index.value) {
+                min_index.value = matrix[i][j];
+                min_index.i = i;
+                min_index.j = j;
             }
         }
     }
-    // LOCK FOR SUM
-     sum += total;
 
-     // UNLOCK
+    pthread_mutex_lock(&lock);
+    sum += total;
+    maxIndex.value = max_index.value;
+    maxIndex.i = max_index.i;
+    maxIndex.j = max_index.j;
+    minIndex.value = min_index.value;
+    minIndex.i = min_index.i;
+    minIndex.j = min_index.j;
+    pthread_mutex_unlock(&lock);
+
+    pthread_exit(NULL);
 }
