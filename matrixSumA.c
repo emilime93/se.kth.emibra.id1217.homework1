@@ -198,4 +198,5 @@ void *Worker(void *arg)
         printf("Min value: %ld (%ld, %ld)\n", compiledMin.value, compiledMin.i, compiledMin.j);
         printf("The execution time is %g sec\n", end_time - start_time);
     }
+    pthread_exit(NULL);
 }
