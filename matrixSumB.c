@@ -1,3 +1,8 @@
+/*
+    TASK 1: Matrix Sum, min & max.
+    Author: Emil Lindholm Brandt
+    Class: ID1217
+*/
 /* matrix summation using pthreads
 
    features: uses a barrier; the Worker[0] computes
@@ -63,6 +68,9 @@ int main(int argc, char *argv[])
 {
     int i, j;
     long l; /* use long in case of a 64-bit system */
+    minIndex.value = LONG_MAX;
+    maxIndex.value = LONG_MIN;
+    
     pthread_attr_t attr;
     pthread_t workerid[MAXWORKERS];
 
@@ -165,12 +173,16 @@ void *Worker(void *arg)
 
     pthread_mutex_lock(&lock);
     sum += total;
-    maxIndex.value = max_index.value;
-    maxIndex.i = max_index.i;
-    maxIndex.j = max_index.j;
-    minIndex.value = min_index.value;
-    minIndex.i = min_index.i;
-    minIndex.j = min_index.j;
+    if (max_index.value > maxIndex.value) {
+        maxIndex.value = max_index.value;
+        maxIndex.i = max_index.i;
+        maxIndex.j = max_index.j;
+    }
+    if (min_index.value < minIndex.value) {
+        minIndex.value = min_index.value;
+        minIndex.i = min_index.i;
+        minIndex.j = min_index.j;
+    }
     pthread_mutex_unlock(&lock);
 
     pthread_exit(NULL);

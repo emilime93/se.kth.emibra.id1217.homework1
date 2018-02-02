@@ -1,3 +1,8 @@
+/*
+    TASK 1: Matrix Sum, min & max.
+    Author: Emil Lindholm Brandt
+    Class: ID1217
+*/
 /* matrix summation using pthreads
 
    features: uses a barrier; the Worker[0] computes
@@ -104,6 +109,8 @@ int main(int argc, char *argv[])
 #endif
 
     rowCount = 0;
+    minIndex.value = LONG_MAX;
+    maxIndex.value = LONG_MIN;
 
     /* Read timer for start time */
     start_time = read_timer();
@@ -148,11 +155,11 @@ void *Worker(void *arg)
         /* Determine where to start */
         pthread_mutex_lock(&lock);
         row = rowCount++;
-        pthread_mutex_unlock(&lock);
-
-        if (rowCount >= size) {
+        if (rowCount > size) {
+            pthread_mutex_unlock(&lock);
             break;
         }
+        pthread_mutex_unlock(&lock);
 
         /* sum values in my row */
         for (j = 0; j < size; j++) {
@@ -171,18 +178,22 @@ void *Worker(void *arg)
 
         pthread_mutex_lock(&lock);
         sum += total;
-        maxIndex.value = max_index.value;
-        maxIndex.i = max_index.i;
-        maxIndex.j = max_index.j;
-        minIndex.value = min_index.value;
-        minIndex.i = min_index.i;
-        minIndex.j = min_index.j;
+        if (max_index.value > maxIndex.value) {
+            maxIndex.value = max_index.value;
+            maxIndex.i = max_index.i;
+            maxIndex.j = max_index.j;
+        }
+        if (min_index.value < minIndex.value) {
+            minIndex.value = min_index.value;
+            minIndex.i = min_index.i;
+            minIndex.j = min_index.j;
+        }
         pthread_mutex_unlock(&lock);
     }
 
-    #ifdef DEBUG
-        printf("worker %ld (pthread id %ld) has finished\n", myid, (long)pthread_self());
-    #endif
+    // #ifdef DEBUG
+    //     printf("worker %ld (pthread id %ld) has finished\n", myid, (long)pthread_self());
+    // #endif
 
     pthread_exit(NULL);
 }

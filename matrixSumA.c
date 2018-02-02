@@ -1,3 +1,9 @@
+/*
+    TASK 1: Matrix Sum, min & max.
+    Author: Emil Lindholm Brandt
+    Class: ID1217
+*/
+
 /* matrix summation using pthreads
    features: uses a barrier; the Worker[0] computes
              the total sum from partial sums computed by Workers
