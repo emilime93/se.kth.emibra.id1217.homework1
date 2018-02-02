@@ -51,7 +51,7 @@ double start_time, end_time;  /* start and end times */
 int size, stripSize;          /* assume size is multiple of numWorkers */
 int matrix[MAXSIZE][MAXSIZE]; /* matrix */
 
-/* Global values for results */
+/*  */
 Index minIndex;
 Index maxIndex;
 long sum = 0;
