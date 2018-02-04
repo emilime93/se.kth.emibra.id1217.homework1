@@ -86,6 +86,9 @@ int main(int argc, char *argv[])
     if (numWorkers > MAXWORKERS)
         numWorkers = MAXWORKERS;
 
+    printf("===== RUN INFO =====\n");
+    printf("Problem Size:\t%d\nNum Workers:\t%d\n\n", size, numWorkers);
+
     srand(time(NULL));
 
     /* initialize the matrix */
@@ -96,17 +99,17 @@ int main(int argc, char *argv[])
     }
 
     /* print the matrix */
-#ifdef DEBUG
-    for (i = 0; i < size; i++)
-    {
-        printf("[ ");
-        for (j = 0; j < size; j++)
+    #ifdef DEBUG
+        for (i = 0; i < size; i++)
         {
-            printf(" %d", matrix[i][j]);
+            printf("[ ");
+            for (j = 0; j < size; j++)
+            {
+                printf(" %d", matrix[i][j]);
+            }
+            printf(" ]\n");
         }
-        printf(" ]\n");
-    }
-#endif
+    #endif
 
     rowCount = 0;
     minIndex.value = LONG_MAX;

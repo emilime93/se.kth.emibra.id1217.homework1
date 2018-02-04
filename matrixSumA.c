@@ -101,6 +101,9 @@ int main(int argc, char *argv[])
         numWorkers = MAXWORKERS;
     stripSize = size / numWorkers;
 
+    printf("===== RUN INFO =====\n");
+    printf("Problem Size:\t%d\nNum Workers:\t%d\n\n", size, numWorkers);
+
     srand(time(NULL));
 
     /* initialize the matrix */

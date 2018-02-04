@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     long l; /* use long in case of a 64-bit system */
     minIndex.value = LONG_MAX;
     maxIndex.value = LONG_MIN;
-    
+
     pthread_attr_t attr;
     pthread_t workerid[MAXWORKERS];
 
@@ -89,6 +89,9 @@ int main(int argc, char *argv[])
     if (numWorkers > MAXWORKERS)
         numWorkers = MAXWORKERS;
     stripSize = size / numWorkers;
+
+    printf("===== RUN INFO =====\n");
+    printf("Problem Size:\t%d\nNum Workers:\t%d\n\n", size, numWorkers);
 
     srand(time(NULL));
 

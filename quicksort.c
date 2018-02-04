@@ -23,19 +23,28 @@
 #define MAXWORKERS 10   /* maximum number of workers */
 
 /* FUNCTION DECLARATIONS */
-void quicksort(int *, int, int);
+void *quicksort(void *);
 int partition(int *, int, int);
 void swap(int *, int *);
-void *worker(void *);
 double read_timer();
+void printArray(int *);
+void seq_quicksort(int *, int, int);
 
 /* GLOBALS */
-int problemSize;
+long problemSize;
 int numWorkers;
+pthread_t workerID[MAXWORKERS];
+
+/* Struct for organizing arguments */
+typedef struct {
+    long id;
+    int *arr;
+    int lo;
+    int hi;
+} Work_Args;
 
 
 /* Pthread setup*/
-// TODO: Add pthread declarations
 
 /* timer */
 double read_timer()
@@ -52,18 +61,59 @@ double read_timer()
     return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
 }
 
+void printArray(int *arr) {
+    long i;
+    printf("[ ");
+    for (i = 0; i < problemSize; i++) {
+        printf("%d, ", arr[i]);
+    }
+    printf("]\n");
+}
+
 void swap(int *a, int *b) {
     int tmp = *a;
     *a = *b;
     *b = tmp;
 }
 
-void quicksort(int *arr, int lo, int hi) {
+void seq_quicksort(int *arr, int lo, int hi) {
     if (lo < hi) {
         int pivot_location = partition(arr, lo, hi);
-        quicksort(arr, lo, pivot_location);
-        quicksort(arr, pivot_location+1, hi);
+        seq_quicksort(arr, lo, pivot_location);
+        seq_quicksort(arr, pivot_location+1, hi);
     }
+}
+
+void *quicksort(void *arg) {
+    Work_Args *args = (Work_Args *) arg;
+    long myID = args->id;
+    int* arr = args->arr;
+    int lo = args->lo;
+    int hi = args->hi;
+
+    int pivot_location = partition(arr, lo, hi);
+
+    if (myID*2 +1 > MAXWORKERS) {
+        seq_quicksort(arr, lo, pivot_location);
+        seq_quicksort(arr, pivot_location+1, hi);
+    } else if (lo < hi) {
+
+        // Make attributes for threads
+        pthread_attr_t attr1;
+        pthread_attr_init(&attr1);
+        pthread_attr_t attr2;
+        pthread_attr_init(&attr2);
+
+        /* Create the arguments to pass along to new workers */
+        Work_Args args1 = (Work_Args) {.id = myID*2, .arr = arr, .lo = lo, .hi = pivot_location};
+        Work_Args args2 = (Work_Args) {.id = myID*2 +1, .arr = arr, .lo = pivot_location+1, .hi = hi};
+
+        pthread_create(&workerID[myID*2], &attr1, quicksort, (void *) &args1);
+        pthread_create(&workerID[myID*2+1], &attr2, quicksort, (void *) &args2);
+        pthread_join(workerID[myID*2], (void *) &arr);
+        pthread_join(workerID[myID*2+1], (void *) &arr);
+    }
+    pthread_exit((void *) arr);
 }
 
 int partition(int *arr, int lo, int hi) {
@@ -82,57 +132,58 @@ int partition(int *arr, int lo, int hi) {
     return leftWall;
 }
 
-void *worker(void *arg) {
-    long myID = (long)arg;
-    printf("My id is: %ld\n", myID);
-
-    int *myAns = calloc(problemSize, sizeof(int));
-
-    int i;
-    for (i = 0; i < problemSize; i++) {
-        myAns[i] = myID;
-    }
-    pthread_exit((void *) myAns);
-}
-
 int main(int argc, char const *argv[]) {
     long i;
 
-    if (argc > 1) {
-        problemSize = atoi(argv[1]);
-    }
+    /* INITIALIZE THE SIZES */
+    problemSize = (argc > 1) ? problemSize = atoi(argv[1]) : MAXSIZE;
     problemSize = (problemSize > MAXSIZE) ? MAXSIZE : problemSize;
-    if (argc > 2) {
-        numWorkers = atoi(argv[2]);
-    }
-    numWorkers = (numWorkers > MAXWORKERS) ? MAXWORKERS : numWorkers;
 
-    /* MALLOC */
+    // WORKERS -1 due to using heap structure and therefore skipping index 0
+    numWorkers = (argc > 2) ? numWorkers = atoi(argv[2]) : MAXWORKERS - 1;
+    numWorkers = (numWorkers >= MAXWORKERS) ? MAXWORKERS-1 : numWorkers;
+
+    printf("===== RUN INFO =====\n");
+    printf("Problem Size:\t%ld\nNum Workers:\t%d\n\n", problemSize, numWorkers);
+
+    /* MALLOC space for answer */
     int *ans = calloc(problemSize, sizeof(int));
 
     /* THREAD START */
-
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_t workerID[numWorkers];
+    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 
+    /* TEST DATA */
+
+    srand(time(NULL));
+    for (i = 0; i < problemSize; i++) {
+        ans[i] = rand() % 100 +1;
+    }
+
+    #ifdef DEBUG
+        printf("Unsorted array:\n");
+        printArray(ans);
+    #endif
+
+    /* Create the arguments for the first worker */
+    Work_Args args = (Work_Args) {.id = 1, .arr = ans, .lo = 0, .hi = problemSize};
+
+
+    /* Start the timers, and the workers */
     double start_time = read_timer();
 
-    // START WORKERS HERE
-    for (i = 0; i < numWorkers; i++) {
-        pthread_create(&workerID[i], &attr, worker, (void *)i);
-    }
-    for (i = 0; i < numWorkers; i++) {
-        pthread_join(workerID[i], (void *) &ans);
-    }
+    pthread_create(&workerID[1], &attr, quicksort, (void *) &args);
+    pthread_join(workerID[1], (void *) &ans);
 
     double end_time = read_timer();
 
     printf("Time taken: %f\n", end_time-start_time);
 
-    for (i = 0; i < problemSize; i++) {
-        printf("Ans is: %d\n", ans[i]);
-    }
+    #ifdef DEBUG
+        printf("Sorted Array:\n");
+        printArray(ans);
+    #endif
 
     free(ans);
 
