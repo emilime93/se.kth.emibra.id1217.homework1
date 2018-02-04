@@ -149,10 +149,6 @@ void *Worker(void *arg)
     max_indices[myid].value = LONG_MIN;
     min_indices[myid].value = LONG_MAX;
 
-#ifdef DEBUG
-    printf("worker %ld (pthread id %ld) has started\n", myid, (long)pthread_self());
-#endif
-
     /* determine first and last rows of my strip */
     first = myid * stripSize;
     last = (myid == numWorkers - 1) ? (size - 1) : (first + stripSize - 1);

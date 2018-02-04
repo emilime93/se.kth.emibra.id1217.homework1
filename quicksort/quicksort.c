@@ -178,12 +178,12 @@ int main(int argc, char const *argv[]) {
 
     double end_time = read_timer();
 
-    printf("Time taken: %f\n", end_time-start_time);
-
     #ifdef DEBUG
         printf("Sorted Array:\n");
         printArray(ans);
     #endif
+
+    printf("Time taken: %f\n", end_time-start_time);
 
     free(ans);
 

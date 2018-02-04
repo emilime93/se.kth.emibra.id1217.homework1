@@ -145,11 +145,6 @@ void *Worker(void *arg)
     int total, j, row;
     Index min_index, max_index;
 
-
-#ifdef DEBUG
-    printf("worker %ld (pthread id %ld) has started\n", myid, (long)pthread_self());
-#endif
-
     while (true) {
         min_index.value = LONG_MAX;
         max_index.value = LONG_MIN;
