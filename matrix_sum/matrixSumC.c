@@ -2,6 +2,7 @@
     TASK 1: Matrix Sum, min & max.
     Author: Emil Lindholm Brandt
     Class: ID1217
+    Bag of tasks. Every worker gets a row to work on, grabs it with mutex lock, and tries to grab more. Main prints results.
     Example run:
     gcc matrixSumC.c -o matrixSumC.o -fopenmp -DDEBUG && ./matrixSumC.o 3 10
 */
@@ -199,10 +200,6 @@ void *Worker(void *arg)
             pthread_mutex_unlock(&lock);
         }
     }
-
-    // #ifdef DEBUG
-    //     printf("worker %ld (pthread id %ld) has finished\n", myid, (long)pthread_self());
-    // #endif
 
     pthread_exit(NULL);
 }

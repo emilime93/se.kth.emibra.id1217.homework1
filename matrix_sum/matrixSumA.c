@@ -2,6 +2,7 @@
     TASK 1: Matrix Sum, min & max.
     Author: Emil Lindholm Brandt
     Class: ID1217
+    Extended to find the max and min values, and their indicies.
     Example run:
     gcc matrixSumA.c -o matrixSumA.o -fopenmp -DDEBUG && ./matrixSumA.o 3 10
 */

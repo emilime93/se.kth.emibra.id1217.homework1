@@ -2,6 +2,7 @@
     TASK 1: Matrix Sum, min & max.
     Author: Emil Lindholm Brandt
     Class: ID1217
+    Main method prints the answer, threads use mutex locks.
     Example run:
     gcc matrixSumB.c -o matrixSumB.o -fopenmp -DDEBUG && ./matrixSumB.o 3 10
 */
