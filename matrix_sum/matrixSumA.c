@@ -2,6 +2,8 @@
     TASK 1: Matrix Sum, min & max.
     Author: Emil Lindholm Brandt
     Class: ID1217
+    Example run:
+    gcc matrixSumA.c -o matrixSumA.o -fopenmp -DDEBUG && ./matrixSumA.o 3 10
 */
 
 /* matrix summation using pthreads
