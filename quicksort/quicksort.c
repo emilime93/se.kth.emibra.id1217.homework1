@@ -140,8 +140,8 @@ int main(int argc, char const *argv[]) {
     problemSize = (problemSize > MAXSIZE) ? MAXSIZE : problemSize;
 
     // WORKERS -1 due to using heap structure and therefore skipping index 0
-    numWorkers = (argc > 2) ? numWorkers = atoi(argv[2]) : MAXWORKERS - 1;
-    numWorkers = (numWorkers >= MAXWORKERS) ? MAXWORKERS-1 : numWorkers;
+    numWorkers = (argc > 2) ? numWorkers = atoi(argv[2]) : MAXWORKERS ;
+    numWorkers = (numWorkers >= MAXWORKERS) ? MAXWORKERS: numWorkers;
 
     printf("===== RUN INFO =====\n");
     printf("Problem Size:\t%ld\nNum Workers:\t%d\n\n", problemSize, numWorkers);
