@@ -93,7 +93,7 @@ void *quicksort(void *arg) {
 
     int pivot_location = partition(arr, lo, hi);
 
-    if (myID*2 +1 > MAXWORKERS) {
+    if (myID+2 > MAXWORKERS) {
         seq_quicksort(arr, lo, pivot_location);
         seq_quicksort(arr, pivot_location+1, hi);
     } else if (lo < hi) {
@@ -105,13 +105,13 @@ void *quicksort(void *arg) {
         pthread_attr_init(&attr2);
 
         /* Create the arguments to pass along to new workers */
-        Work_Args args1 = (Work_Args) {.id = myID*2, .arr = arr, .lo = lo, .hi = pivot_location};
-        Work_Args args2 = (Work_Args) {.id = myID*2 +1, .arr = arr, .lo = pivot_location+1, .hi = hi};
+        Work_Args args1 = (Work_Args) {.id = myID+2, .arr = arr, .lo = lo, .hi = pivot_location};
+        Work_Args args2 = (Work_Args) {.id = myID+1, .arr = arr, .lo = pivot_location+1, .hi = hi};
 
-        pthread_create(&workerID[myID*2], &attr1, quicksort, (void *) &args1);
-        pthread_create(&workerID[myID*2+1], &attr2, quicksort, (void *) &args2);
-        pthread_join(workerID[myID*2], (void *) &arr);
-        pthread_join(workerID[myID*2+1], (void *) &arr);
+        pthread_create(&workerID[myID+2], &attr1, quicksort, (void *) &args1);
+        pthread_join(workerID[myID+2], (void *) &arr);
+        quicksort(&args2);
+        
     }
     pthread_exit((void *) arr);
 }
@@ -173,8 +173,8 @@ int main(int argc, char const *argv[]) {
     /* Start the timers, and the workers */
     double start_time = read_timer();
 
-    pthread_create(&workerID[1], &attr, quicksort, (void *) &args);
-    pthread_join(workerID[1], (void *) &ans);
+    pthread_create(&workerID[0], &attr, quicksort, (void *) &args);
+    pthread_join(workerID[0], (void *) &ans);
 
     double end_time = read_timer();
 
